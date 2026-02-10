@@ -1,0 +1,15 @@
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Dataset (local only)
+data/
+
+# Trained models
+*.keras
+
+# VS Code temp files
+tempCodeRunnerFile.py
