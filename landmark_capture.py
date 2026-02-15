@@ -6,7 +6,7 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 # ---------- CONFIG ----------
-WORD = "thank_you"
+WORD = "Z"
 FRAMES_PER_SAMPLE = 30
 SAVE_DIR = f"data/raw/{WORD}"
 os.makedirs(SAVE_DIR, exist_ok=True)
@@ -28,6 +28,7 @@ cap = cv2.VideoCapture(0)
 recording = False
 sequence = []
 sample_count = len(os.listdir(SAVE_DIR))
+previous_frame = None
 
 print("Press 's' to start recording | 'q' to quit")
 
@@ -42,13 +43,40 @@ while cap.isOpened():
 
     if result.hand_landmarks:
         hand_landmarks = result.hand_landmarks[0]
-        landmarks = []
 
+        # -------- Translation Normalization --------
+        wrist = hand_landmarks[0]
+
+        normalized = []
         for lm in hand_landmarks:
-            landmarks.extend([lm.x, lm.y, lm.z])
+            normalized.append(lm.x - wrist.x)
+            normalized.append(lm.y - wrist.y)
+            normalized.append(lm.z - wrist.z)
+
+        # -------- Scale Normalization --------
+        mcp = hand_landmarks[9]
+        scale = ((mcp.x - wrist.x)**2 +
+                 (mcp.y - wrist.y)**2 +
+                 (mcp.z - wrist.z)**2) ** 0.5
+
+        if scale > 0:
+            normalized = [coord / scale for coord in normalized]
+
+        current_frame = np.array(normalized)
+
+        # -------- Motion (Velocity) Features --------
+        if previous_frame is None:
+            velocity = np.zeros_like(current_frame)
+        else:
+            velocity = current_frame - previous_frame
+
+        combined_features = np.concatenate([current_frame, velocity])
+
+        previous_frame = current_frame
 
         if recording:
-            sequence.append(landmarks)
+            sequence.append(combined_features)
+
             cv2.putText(
                 frame,
                 f"Recording {len(sequence)}/{FRAMES_PER_SAMPLE}",
@@ -66,7 +94,9 @@ while cap.isOpened():
             np.array(sequence)
         )
         print(f"Saved sample_{sample_count:03}.npy")
+
         sequence = []
+        previous_frame = None
         recording = False
 
     cv2.imshow("Capture", frame)
@@ -75,6 +105,7 @@ while cap.isOpened():
     if key == ord('s') and not recording:
         recording = True
         sequence = []
+        previous_frame = None
     elif key == ord('q'):
         break
 
