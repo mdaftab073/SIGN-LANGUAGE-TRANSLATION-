@@ -248,20 +248,15 @@ Integration of face landmarks
 
 Web or mobile deployment
 
+
+
+
+
+
+
 👨‍💻 Author
 
 Md Aftab Siddiqui
 B.Tech Artificial Intelligence
 SVNIT Surat
 
-📜 License
-
-This project is developed for educational and research purposes.
-
-If you want, I can now help you:
-
-Add a GIF demo section (highly recommended 🔥)
-
-Add model performance graphs
-
-Or make it more research-internship oriented
